@@ -1,0 +1,34 @@
+sudo: false
+language: ruby
+rvm: 2.4
+branches:
+  only: master
+notifications:
+  email:
+    recipients:
+    on_success: change
+    on_failure: always
+  slack:
+    secure: DHnxvFornh9mlL07Ox0sRilgMTK7U/K4yoebXnM+RonwjoLFUZvERDiuvw6z69W2pIdQP/4Nk7cbDgeHVPINRWhZxPoWHcNpfEDeotApodBQtFALxp40ujsepE5RLE33oP0aZsttC3/jdXaq8uQGnGeLmMW3M2qIOKhOXXl3uT22NZE5UZl9apXgNR8t9vt4L2ExVVPcbuyfi+j/HMOteYn5EYTGziZ6JWFaAxr7Ps4+TnDYLOlhJIoD82oLhU+Ym8S3iP/0vPzuCf6fjdRbcRiHc4n+vPPA32QFwewahpbFy/AE1LcRP8VOPV7yvyAVU1bEePbsRSB4FYrp72dBTTR3dfE2rjcol8adsRfmHMOJfMsbnf4YKG582Wa7++Ojdz1x6V8k/wMhgtUmVOakov9pel6+q9AZGUc/954KA286TZ350BNMrj/rKMCxtvgFYNsPscNxc64IF2NUWVLJS0LXj/vcsrF6npM5ehvIgJ7w/GnQ/wWgUe6hVy742ns/oktWipjf/5U8SOtYGvdWeCWU3HzG1NlnYjYmmpryy1OwyaqqOv8Dwa209PVtJPVdalw3t0h9t+0OVJVB7TbKddOqIB5Clp/DvLQnEOnpB//Ovj/t8RWI4Tl/XFzgWaSl0/TaTADeN37sJYlrMNi4J2o8ODfXQS1EDGV4bfRLNcQ=
+script: bundle exec jekyll build
+before_deploy: pip install awscli --upgrade --user
+deploy:
+- provider: s3
+  access_key_id: $AWS_ACCESS_KEY_ID
+  secret_access_key: $AWS_SECRET_ACCESS_KEY
+  bucket: allie.is
+  region: us-west-2
+  skip_cleanup: true
+  local_dir: _site
+  on:
+    branch: master
+after_deploy:
+- aws configure set preview.cloudfront true
+- test $TRAVIS_BRANCH = "master" && aws cloudfront create-invalidation
+  --distribution-id $CLOUDFRONT_DISTRIBUTION_ID
+  --paths "/*"
+- 'curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ALLIEIS_ZONE_ID/purge_cache"
+  -H "X-Auth-Email: $CLOUDFLARE_EMAIL"
+  -H "X-Auth-Key: $CLOUDFLARE_API_KEY"
+  -H "Content-Type: application/json"
+  --data "{\"purge_everything\":true}"'

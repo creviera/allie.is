@@ -1,0 +1,14 @@
+# This file is *NOT* auto-reloaded when you use `bundle exec jekyll serve`
+
+title: Allie Crevier
+description: ""
+baseurl: ""
+url: "https://allie.is"
+github_username:  creviera
+rss: "RSS"
+
+# Build settings
+markdown: kramdown
+theme: minima
+plugins:
+  - jekyll-feed
